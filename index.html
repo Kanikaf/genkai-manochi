@@ -252,7 +252,8 @@ function gameLoop(now){
     }
     bonusDisp.textContent=`⚡ ${(3-bonusZoneTime).toFixed(1)}s`;
     bonusTxt.classList.add('show');
-    dangerTxt.classList.add('show');
+    if(gauge>=80) dangerTxt.classList.add('show');
+    else dangerTxt.classList.remove('show');
   } else {
     bonusZoneTime=0; bonusDisp.textContent='';
     bonusTxt.classList.remove('show');
