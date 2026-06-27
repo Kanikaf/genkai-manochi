@@ -69,7 +69,7 @@ body{background:#1a0a2e;font-family:'Segoe UI',sans-serif;overflow:hidden;width:
 #bonus-txt.show{animation:bflash .6s infinite;}
 @keyframes bflash{0%,100%{opacity:.5}50%{opacity:1}}
 #tap-hint{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);color:rgba(200,150,255,.45);font-size:11px;pointer-events:none;}
-#hit-zone{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:108px;height:100px;border:1px dashed rgba(255,255,255,.12);border-radius:8px;pointer-events:none;z-index:4;}
+#hit-zone{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:108px;height:100px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;pointer-events:none;z-index:4;}
 </style>
 </head>
 <body>
@@ -156,8 +156,8 @@ let score=0,gauge=40,gameTime=0,gameRunning=false;
 let items=[],animFrame=null,lastTime=0;
 let gaugeRate=3,spawnInterval=2200,itemSpeed=2.0;
 let lastSpawn=0,bonusZoneTime=0,lastCharKey='';
-const CHAR_HOME=190;
-const CHAR_DOWN=68;
+const CHAR_HOME=130;
+const CHAR_DOWN=40;
 const CHAR_W=140;
 const ITEM_W=100;
 const ITEM_H=90;
