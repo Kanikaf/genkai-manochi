@@ -226,7 +226,8 @@ function gameLoop(now){
   const dt=Math.min((now-lastTime)/1000,0.08);
   lastTime=now; gameTime+=dt;
   const t=gameTime;
-  gaugeRate=3+t*0.05;
+  const baseRate=3+t*0.05;
+  gaugeRate=gauge<40 ? baseRate*1.6 : gauge>=80 ? baseRate*0.6 : baseRate;
   spawnInterval=Math.max(400,1600-t*20);
   itemSpeed=2.0+t*0.045;
   gauge=Math.min(100,gauge+gaugeRate*dt);
@@ -296,18 +297,18 @@ function handleTap(obj){
   const cx=195, cy=150;
   if(obj.type==='toilet'){
     if(gauge<40){
-      score-=100; gauge=Math.min(100,gauge+5);
+      score-=100; gauge=Math.min(100,gauge+3);
       showFxEmoji('😑💨',cx,cy-60);
       showFxScore('-100 出しすぎ！',cx-20,cy-36,'#38bdf8');
       showRing(cx,cy,'#38bdf8'); flashMiss();
     } else {
-      score+=100; gauge=Math.max(0,gauge-20);
+      score+=100; gauge=Math.max(0,gauge-12);
       showFxEmoji('✨',cx,cy-60);
       showFxScore('+100',cx,cy-36,'#4ade80');
       showRing(cx,cy,'#4ade80');
     }
   } else {
-    score-=300; gauge=Math.min(100,gauge+18);
+    score-=300; gauge=Math.min(100,gauge+10);
     showFxEmoji('💥',cx,cy-60);
     showFxScore('-300 誤爆！',cx,cy-36,'#f87171');
     showRing(cx,cy,'#f87171'); flashMiss();
