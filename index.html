@@ -279,7 +279,7 @@ function spawnItem(){
   if(!gameRunning) return;
   const ww=document.getElementById('gw').offsetWidth||390;
   const fr=Math.random()<0.5;
-  const chairChance=0.3+Math.min(gameTime*0.007,0.28);
+  const chairChance=0.25+Math.min(gameTime*0.003,0.15);
   const isChair=Math.random()<chairChance;
   const spd=itemSpeed*(0.65+Math.random()*0.85);
   const el=document.createElement('div');
