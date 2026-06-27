@@ -44,6 +44,8 @@ body{background:#1a0a2e;font-family:'Segoe UI',sans-serif;overflow:hidden;width:
 .effect{position:absolute;pointer-events:none;z-index:20;font-size:26px;animation:floatUp .85s ease forwards;}
 .effect-score{position:absolute;pointer-events:none;z-index:20;font-size:18px;font-weight:900;animation:floatUp .85s ease forwards;white-space:nowrap;}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-65px) scale(1.2)}}
+@keyframes floatDown{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(40px) scale(1.4)}}
+@keyframes poopFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}80%{opacity:1;}100%{opacity:0;transform:translateY(800px) rotate(360deg)}}
 .hit-ring{position:absolute;border-radius:50%;border:3px solid;animation:expandRing .5s ease forwards;pointer-events:none;z-index:15;}
 @keyframes expandRing{0%{width:50px;height:50px;opacity:1;margin:-25px}100%{width:110px;height:110px;opacity:0;margin:-55px}}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:30;background:rgba(10,0,25,.93);padding:20px;overflow-y:auto;}
@@ -209,7 +211,7 @@ function showScreen(id){
 }
 function startGame(){
   document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-  score=0; gauge=48; gameTime=0; items=[]; lastSpawn=0;
+  score=0; gauge=35; gameTime=0; items=[]; lastSpawn=0;
   gaugeRate=3; spawnInterval=2200; itemSpeed=2.0;
   bonusZoneTime=0; lastCharKey='';
   lane.innerHTML='';
@@ -307,20 +309,28 @@ function handleTap(obj){
       showFxScore('-100 出しすぎ！',cx-20,cy-36,'#38bdf8');
       showRing(cx,cy,'#38bdf8'); flashMiss();
     } else {
-      score+=100; gauge=Math.max(0,gauge-12);
+      score+=100; gauge=Math.max(0,gauge-24);
       showFxEmoji('✨',cx,cy-60);
       showFxScore('+100',cx,cy-36,'#4ade80');
       showRing(cx,cy,'#4ade80');
     }
   } else {
-    score-=300; gauge=Math.min(100,gauge+10);
+    score-=300; gauge=Math.max(0,gauge-16);
     showFxEmoji('💥',cx,cy-60);
     showFxScore('-300 誤爆！',cx,cy-36,'#f87171');
+    showPoopBelow(cx);
     showRing(cx,cy,'#f87171'); flashMiss();
   }
   scoreEl.textContent='🏆 '+score;
   sitDown(()=>{ updateGauge(); updateChar(); });
   updateGauge(); updateChar();
+}
+function showPoopBelow(cx){
+  const e=document.createElement('div');
+  e.style.cssText=`position:absolute;font-size:28px;left:${cx-14}px;bottom:100px;z-index:20;animation:floatDown .8s ease forwards;pointer-events:none;`;
+  e.textContent='💩';
+  document.getElementById('ga').appendChild(e);
+  setTimeout(()=>e.remove(),800);
 }
 function showFxEmoji(emoji,x,y){
   const e=document.createElement('div');
@@ -362,15 +372,25 @@ function gameOver(){
   dangerTxt.classList.remove('show');
   bonusTxt.classList.remove('show');
   charImg.src=CHARS.cgo;
-  const ef=document.createElement('div');
-  ef.style.cssText='position:absolute;top:25%;left:50%;transform:translateX(-50%);font-size:56px;z-index:28;animation:floatUp 1.6s ease forwards;pointer-events:none;';
-  ef.textContent='💦💦';
-  document.getElementById('ga').appendChild(ef);
-  setTimeout(()=>ef.remove(),1700);
+  // 💩を画面中に大量に降らせる
+  const ga=document.getElementById('ga');
+  const ww=document.getElementById('gw').offsetWidth||390;
+  const poops=['💩','💩','💩','💩','💩','💦','💩','💩'];
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div');
+    const size=20+Math.random()*30;
+    const x=Math.random()*ww;
+    const delay=Math.random()*1200;
+    const dur=600+Math.random()*800;
+    p.style.cssText=`position:absolute;font-size:${size}px;left:${x}px;top:-40px;z-index:28;pointer-events:none;animation:poopFall ${dur}ms ease ${delay}ms forwards;`;
+    p.textContent=poops[Math.floor(Math.random()*poops.length)];
+    ga.appendChild(p);
+    setTimeout(()=>p.remove(),delay+dur+100);
+  }
   setTimeout(()=>{
     document.getElementById('go-score').textContent=score+'点';
     showScreen('go-screen');
-  },1300);
+  },1800);
 }
 async function submitScore(){
   const name=document.getElementById('name-input').value.trim()||'名無し';
@@ -430,7 +450,11 @@ function tapClosest(tx){
   } else {
     charWrap.style.bottom=CHAR_DOWN+'px';
     setTimeout(()=>charWrap.style.bottom=CHAR_HOME+'px',200);
-    showFxScore('空振り！',charX-30,130,'rgba(200,150,255,.9)');
+    gauge=Math.max(0,gauge-10);
+    updateGauge(); updateChar();
+    const cx=document.getElementById('gw').offsetWidth/2;
+    showPoopBelow(cx);
+    showFxScore('空振り！',cx-30,130,'rgba(200,150,255,.9)');
   }
 }
 showScreen('title-screen');
