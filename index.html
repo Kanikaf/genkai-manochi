@@ -34,7 +34,7 @@ body{background:#1a0a2e;font-family:'Segoe UI',sans-serif;overflow:hidden;width:
 #ga{position:absolute;top:46px;left:0;right:0;bottom:58px;}
 #lane{position:absolute;bottom:0;left:0;right:0;height:140px;}
 #ground{position:absolute;bottom:50px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(168,85,247,.4),transparent);}
-#char-wrap{position:absolute;left:50%;transform:translateX(-50%);bottom:110px;width:140px;z-index:6;pointer-events:none;transition:bottom 0.2s cubic-bezier(.3,1.5,.6,1);}
+#char-wrap{position:absolute;left:50%;transform:translateX(-50%);bottom:110px;width:140px;z-index:6;pointer-events:none;transition:bottom 0.2s cubic-bezier(.3,1.5,.6,1);overflow:visible;}
 #char-img{width:140px;height:160px;object-fit:contain;object-position:bottom;display:block;filter:drop-shadow(0 4px 14px rgba(124,58,237,.6));}
 .item{position:absolute;bottom:44px;cursor:pointer;z-index:5;}
 .item img{display:block;object-fit:contain;filter:drop-shadow(0 3px 10px rgba(0,0,0,.6));transition:transform .1s;}
@@ -63,10 +63,10 @@ body{background:#1a0a2e;font-family:'Segoe UI',sans-serif;overflow:hidden;width:
 .rank-3{background:rgba(180,100,30,.15);}
 #miss-ov{position:absolute;inset:0;background:rgba(255,0,80,.2);opacity:0;pointer-events:none;z-index:25;transition:opacity .1s;}
 #bonus-ov{position:absolute;inset:0;background:rgba(250,200,50,.1);opacity:0;pointer-events:none;z-index:24;transition:opacity .3s;}
-#danger-txt{position:absolute;bottom:280px;left:50%;transform:translateX(-50%);color:#ff3333;font-size:20px;font-weight:900;opacity:0;pointer-events:none;z-index:22;text-shadow:0 0 16px #ff0000;white-space:nowrap;}
+#danger-txt{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);color:#ff3333;font-size:18px;font-weight:900;opacity:0;pointer-events:none;z-index:22;text-shadow:0 0 16px #ff0000;white-space:nowrap;margin-bottom:4px;}
 #danger-txt.show{animation:dflash .45s infinite;}
 @keyframes dflash{0%,100%{opacity:0}50%{opacity:1}}
-#bonus-txt{position:absolute;bottom:148px;left:50%;transform:translateX(-50%);color:#fbbf24;font-size:17px;font-weight:900;opacity:0;pointer-events:none;z-index:22;text-shadow:0 0 14px #f59e0b;white-space:nowrap;}
+#bonus-txt{position:absolute;top:100%;left:50%;transform:translateX(-50%);color:#fbbf24;font-size:15px;font-weight:900;opacity:0;pointer-events:none;z-index:22;text-shadow:0 0 14px #f59e0b;white-space:nowrap;margin-top:4px;}
 #bonus-txt.show{animation:bflash .6s infinite;}
 @keyframes bflash{0%,100%{opacity:.5}50%{opacity:1}}
 #tap-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);color:rgba(200,150,255,.45);font-size:11px;pointer-events:none;}
@@ -106,9 +106,11 @@ body{background:#1a0a2e;font-family:'Segoe UI',sans-serif;overflow:hidden;width:
   <div id="lane"></div>
   <div id="ground"></div>
   <div id="hit-zone"></div>
-  <div id="char-wrap"><img id="char-img" src="" alt="まのちぃ"></div>
-  <div id="danger-txt">⚠️ やばい！</div>
-  <div id="bonus-txt">⚡ ボーナスゾーン！</div>
+  <div id="char-wrap">
+    <div id="danger-txt">⚠️ やばい！</div>
+    <img id="char-img" src="" alt="まのちぃ">
+    <div id="bonus-txt">⚡ ボーナスゾーン！</div>
+  </div>
   <div id="tap-hint">タップして座る</div>
 </div>
 <div id="miss-ov"></div>
