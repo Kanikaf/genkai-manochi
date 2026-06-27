@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>💜 限界まのちぃ</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; touch-action:none; }
+body { background:#1a0a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; width:100vw; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+#game-wrap { width:390px; height:844px; max-height:100vh; max-width:100vw; position:relative; overflow:hidden; background:linear-gradient(180deg,#0d0520 0%,#1a0a2e 40%,#2a1040 100%); }
+
+/* Stars */
+.star { position:absolute; border-radius:50%; background:#fff; animation:twinkle 2s infinite; }
+@keyframes twinkle { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+/* HUD */
+#hud { position:absolute; top:0; left:0; right:0; padding:12px 16px 8px; z-index:10; }
+#score-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+#score { color:#f0c4ff; font-size:22px; font-weight:700; text-shadow:0 0 10px #c084fc; }
+#time-display { color:#a78bfa; font-size:14px; }
+
+/* Gauge */
+#gauge-wrap { position:relative; height:22px; background:rgba(255,255,255,.1); border-radius:11px; overflow:hidden; border:1px solid rgba(200,100,255,.3); }
+#gauge-bar { height:100%; width:0%; background:linear-gradient(90deg,#a78bfa,#f472b6,#fb923c); border-radius:11px; transition:width .15s; }
+#gauge-label { position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:11px; color:#fde8ff; font-weight:600; }
+#gauge-icon { position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:13px; }
+
+/* Game area */
+#game-area { position:absolute; top:80px; left:0; right:0; bottom:120px; }
+
+/* Character */
+#char-wrap { position:absolute; bottom:60px; left:50%; transform:translateX(-50%); width:90px; height:120px; z-index:5; cursor:pointer; user-select:none; }
+#char-wrap.sit-anim { animation:sitBounce .25s ease; }
+@keyframes sitBounce { 0%{transform:translateX(-50%) scaleY(1)} 50%{transform:translateX(-50%) scaleY(.88)} 100%{transform:translateX(-50%) scaleY(1)} }
+
+/* Lane */
+#lane { position:absolute; bottom:0; left:0; right:0; height:120px; }
+
+/* Items */
+.item { position:absolute; bottom:30px; width:70px; height:70px; cursor:pointer; transition:filter .1s; }
+.item:active { filter:brightness(1.3); }
+
+/* Effects */
+.effect { position:absolute; pointer-events:none; z-index:20; font-size:32px; animation:floatUp .9s ease forwards; }
+@keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.4)} }
+
+.hit-ring { position:absolute; border-radius:50%; border:3px solid; animation:expandRing .5s ease forwards; pointer-events:none; z-index:15; }
+@keyframes expandRing { 0%{width:60px;height:60px;opacity:1;margin:-30px} 100%{width:120px;height:120px;opacity:0;margin:-60px} }
+
+/* Screens */
+.screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:30; background:rgba(10,0,25,.92); padding:24px; }
+.screen h1 { color:#f0c4ff; font-size:28px; text-align:center; margin-bottom:8px; text-shadow:0 0 20px #c084fc; }
+.screen p { color:#c4b5fd; font-size:14px; text-align:center; margin-bottom:20px; line-height:1.6; }
+.btn { background:linear-gradient(135deg,#7c3aed,#c026d3); color:#fff; border:none; border-radius:24px; padding:14px 40px; font-size:17px; font-weight:700; cursor:pointer; margin:6px; box-shadow:0 4px 20px rgba(168,85,247,.5); }
+.btn:active { transform:scale(.96); }
+.btn.secondary { background:rgba(255,255,255,.1); box-shadow:none; font-size:15px; padding:10px 28px; }
+
+/* Game over */
+#go-final-score { font-size:48px; font-weight:900; color:#f0c4ff; text-shadow:0 0 30px #c084fc; margin:12px 0; }
+#go-msg { font-size:20px; margin-bottom:4px; }
+#name-input { background:rgba(255,255,255,.12); border:1px solid rgba(200,100,255,.5); border-radius:12px; color:#fff; font-size:18px; padding:10px 16px; width:200px; text-align:center; outline:none; margin:12px 0; }
+#name-input::placeholder { color:rgba(255,255,255,.4); }
+
+/* Ranking */
+#ranking-list { width:100%; max-height:280px; overflow-y:auto; }
+.rank-row { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; margin-bottom:6px; background:rgba(255,255,255,.07); }
+.rank-num { width:28px; font-size:13px; color:#a78bfa; font-weight:700; flex-shrink:0; }
+.rank-name { flex:1; color:#e9d5ff; font-size:15px; }
+.rank-score { color:#f0c4ff; font-size:16px; font-weight:700; }
+.rank-1 { background:rgba(250,200,50,.15); }
+.rank-2 { background:rgba(200,200,200,.12); }
+.rank-3 { background:rgba(180,100,30,.15); }
+
+/* Miss flash */
+#miss-overlay { position:absolute; inset:0; background:rgba(255,0,80,.25); opacity:0; pointer-events:none; z-index:25; border-radius:0; transition:opacity .1s; }
+
+/* Poop aura */
+#poop-aura { position:absolute; bottom:40px; left:50%; transform:translateX(-50%); width:100px; height:40px; border-radius:50%; background:radial-gradient(ellipse,rgba(100,200,80,.3),transparent); pointer-events:none; opacity:0; transition:opacity .3s; }
+
+/* Danger */
+#danger-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#ff4444; font-size:28px; font-weight:900; opacity:0; pointer-events:none; z-index:22; text-shadow:0 0 20px #ff0000; animation:none; }
+#danger-text.show { animation:dangerFlash .4s infinite; }
+@keyframes dangerFlash { 0%,100%{opacity:0} 50%{opacity:1} }
+
+/* Tap hint */
+#tap-hint { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); color:rgba(200,150,255,.6); font-size:12px; pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="game-wrap">
+
+<!-- HUD -->
+<div id="hud">
+  <div id="score-row">
+    <div id="score">🏆 0</div>
+    <div id="time-display">⏱ 0s</div>
+  </div>
+  <div id="gauge-wrap">
+    <div id="gauge-icon">💩</div>
+    <div id="gauge-bar"></div>
+    <div id="gauge-label">我慢メーター</div>
+  </div>
+</div>
+
+<div id="game-area">
+  <div id="lane"></div>
+  <div id="poop-aura"></div>
+  <div id="char-wrap" id="char">
+    <!-- Character SVG: purple hair magic girl sitting -->
+    <svg viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg" width="90" height="120">
+      <!-- Body / robe -->
+      <ellipse cx="45" cy="90" rx="28" ry="22" fill="#2d7a3a"/>
+      <rect x="20" y="72" width="50" height="38" rx="10" fill="#2d7a3a"/>
+      <!-- Feather collar -->
+      <ellipse cx="45" cy="72" rx="22" ry="8" fill="#c9a227"/>
+      <ellipse cx="30" cy="74" rx="10" ry="5" fill="#d4aa2a" transform="rotate(-20,30,74)"/>
+      <ellipse cx="60" cy="74" rx="10" ry="5" fill="#d4aa2a" transform="rotate(20,60,74)"/>
+      <!-- Belt -->
+      <rect x="28" y="82" width="34" height="8" rx="4" fill="#7a5c1a"/>
+      <rect x="40" y="82" width="10" height="8" rx="2" fill="#c9a227"/>
+      <!-- Legs sitting -->
+      <ellipse cx="32" cy="108" rx="11" ry="8" fill="#2d7a3a"/>
+      <ellipse cx="58" cy="108" rx="11" ry="8" fill="#2d7a3a"/>
+      <!-- Boots -->
+      <ellipse cx="32" cy="114" rx="12" ry="6" fill="#7a4010"/>
+      <ellipse cx="58" cy="114" rx="12" ry="6" fill="#7a4010"/>
+      <!-- Fur on boots -->
+      <ellipse cx="32" cy="108" rx="13" ry="5" fill="#e8dcc8" opacity=".7"/>
+      <ellipse cx="58" cy="108" rx="13" ry="5" fill="#e8dcc8" opacity=".7"/>
+      <!-- Neck -->
+      <rect x="39" y="54" width="12" height="18" rx="5" fill="#f5c5a0"/>
+      <!-- Head -->
+      <ellipse cx="45" cy="46" rx="22" ry="22" fill="#f5c5a0"/>
+      <!-- Cheeks -->
+      <ellipse cx="32" cy="50" rx="7" ry="5" fill="#f4a0b0" opacity=".5"/>
+      <ellipse cx="58" cy="50" rx="7" ry="5" fill="#f4a0b0" opacity=".5"/>
+      <!-- Purple hair -->
+      <ellipse cx="45" cy="30" rx="22" ry="14" fill="#7c3aed"/>
+      <rect x="23" y="28" width="8" height="20" rx="4" fill="#7c3aed"/>
+      <rect x="59" y="28" width="8" height="20" rx="4" fill="#7c3aed"/>
+      <!-- Helmet -->
+      <ellipse cx="45" cy="28" rx="20" ry="13" fill="#c9a227"/>
+      <ellipse cx="45" cy="24" rx="16" ry="10" fill="#d4aa2a"/>
+      <!-- Blue gem on helmet -->
+      <ellipse cx="45" cy="22" rx="5" ry="5" fill="#38bdf8"/>
+      <ellipse cx="43" cy="20" rx="2" ry="2" fill="#bae6fd" opacity=".7"/>
+      <!-- Antlers -->
+      <path d="M28 20 Q18 8 22 2 Q26 8 24 14 Q20 10 22 4" stroke="#c9a227" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M28 20 Q16 14 14 8" stroke="#c9a227" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M62 20 Q72 8 68 2 Q64 8 66 14 Q70 10 68 4" stroke="#c9a227" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M62 20 Q74 14 76 8" stroke="#c9a227" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Eyes -->
+      <ellipse cx="37" cy="46" rx="6" ry="7" fill="#fff"/>
+      <ellipse cx="53" cy="46" rx="6" ry="7" fill="#fff"/>
+      <ellipse cx="38" cy="47" rx="4" ry="5" fill="#1e56b0"/>
+      <ellipse cx="54" cy="47" rx="4" ry="5" fill="#1e56b0"/>
+      <ellipse cx="39" cy="46" rx="2" ry="2.5" fill="#0a2060"/>
+      <ellipse cx="55" cy="46" rx="2" ry="2.5" fill="#0a2060"/>
+      <ellipse cx="40" cy="45" rx="1" ry="1" fill="#fff"/>
+      <ellipse cx="56" cy="45" rx="1" ry="1" fill="#fff"/>
+      <!-- Mouth -->
+      <path d="M41 55 Q45 59 49 55" stroke="#c0706e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- Staff arm left -->
+      <rect x="8" y="56" width="22" height="7" rx="3.5" fill="#f5c5a0"/>
+      <!-- Staff -->
+      <rect x="4" y="30" width="6" height="60" rx="3" fill="#8B6914"/>
+      <!-- Skull on staff -->
+      <ellipse cx="7" cy="26" rx="8" ry="8" fill="#ddd"/>
+      <ellipse cx="4" cy="28" rx="2.5" ry="3" fill="#111" opacity=".8"/>
+      <ellipse cx="10" cy="28" rx="2.5" ry="3" fill="#111" opacity=".8"/>
+      <ellipse cx="7" cy="26" rx="3" ry="3" fill="#38bdf8" opacity=".8"/>
+      <!-- Book arm right -->
+      <rect x="60" y="56" width="22" height="7" rx="3.5" fill="#f5c5a0"/>
+      <rect x="64" y="48" width="22" height="20" rx="3" fill="#8B2010"/>
+      <rect x="66" y="50" width="18" height="16" rx="2" fill="#fef3c7"/>
+      <!-- Cape -->
+      <path d="M20 72 Q10 90 18 110" stroke="#166534" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M70 72 Q80 90 72 110" stroke="#166534" stroke-width="6" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div id="poop-aura"></div>
+  <div id="danger-text">⚠️ やばい！</div>
+  <div id="tap-hint">タップして座る</div>
+</div>
+
+<div id="miss-overlay"></div>
+
+<!-- Title Screen -->
+<div class="screen" id="title-screen">
+  <svg viewBox="0 0 200 100" width="200" style="margin-bottom:8px">
+    <text x="100" y="50" text-anchor="middle" font-size="52" fill="#c084fc">💜</text>
+    <text x="100" y="90" text-anchor="middle" font-size="18" fill="#f0c4ff" font-weight="700">限界まのちぃ</text>
+  </svg>
+  <h1>限界まのちぃ</h1>
+  <p style="margin-top:4px">💩 便器を見つけて座ろう！<br>椅子には絶対座るな！<br><br>🚽 便器 → <b style="color:#4ade80">+100点</b>　メーター減<br>🪑 椅子 → <b style="color:#f87171">-300点</b>　誤爆！<br>💦 メーターMAX → ゲームオーバー</p>
+  <button class="btn" onclick="startGame()">🎮 スタート！</button>
+  <button class="btn secondary" onclick="showScreen('ranking-screen')">🏆 ランキング</button>
+</div>
+
+<!-- Game Over Screen -->
+<div class="screen" id="gameover-screen" style="display:none">
+  <div style="font-size:48px;margin-bottom:4px">💦</div>
+  <div id="go-msg" style="color:#f87171;font-size:22px;font-weight:700">もれちゃった…</div>
+  <div id="go-final-score">0</div>
+  <p>名前を入れてランキングに登録！</p>
+  <input id="name-input" type="text" maxlength="10" placeholder="なまえ（10文字）">
+  <button class="btn" onclick="submitScore()">📝 登録する</button>
+  <button class="btn secondary" onclick="showScreen('ranking-screen')">🏆 ランキング</button>
+  <button class="btn secondary" onclick="startGame()">🔄 もう一回</button>
+</div>
+
+<!-- Ranking Screen -->
+<div class="screen" id="ranking-screen" style="display:none">
+  <h1>🏆 ランキング</h1>
+  <div id="ranking-list" style="margin:12px 0"></div>
+  <button class="btn" onclick="startGame()">🎮 プレイ</button>
+  <button class="btn secondary" onclick="showScreen('title-screen')">🏠 タイトル</button>
+</div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'toilet_game_ranking_v1';
+let score=0, gauge=0, gameTime=0, gameRunning=false;
+let items=[], spawnTimer=0, animFrame=null;
+let lastTime=0, gaugeRate=3, spawnInterval=2000, itemSpeed=2.2;
+let toiletCount=0, lastSpawn=0;
+
+const gaugeBar=document.getElementById('gauge-bar');
+const scoreEl=document.getElementById('score');
+const timeEl=document.getElementById('time-display');
+const charWrap=document.getElementById('char-wrap');
+const lane=document.getElementById('lane');
+const missOverlay=document.getElementById('miss-overlay');
+const poopAura=document.getElementById('poop-aura');
+const dangerText=document.getElementById('danger-text');
+
+// Stars background
+for(let i=0;i<40;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  const sz=Math.random()*2+1;
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2}s`;
+  document.getElementById('game-area').appendChild(s);
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+  document.getElementById(id).style.display='flex';
+  if(id==='ranking-screen') renderRanking();
+}
+
+function startGame(){
+  document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+  score=0; gauge=0; gameTime=0; items=[]; lastSpawn=0;
+  gaugeRate=3; spawnInterval=2200; itemSpeed=2.0;
+  lane.innerHTML='';
+  scoreEl.textContent='🏆 0';
+  timeEl.textContent='⏱ 0s';
+  updateGauge();
+  gameRunning=true;
+  lastTime=performance.now();
+  if(animFrame) cancelAnimationFrame(animFrame);
+  animFrame=requestAnimationFrame(gameLoop);
+}
+
+function gameLoop(now){
+  if(!gameRunning) return;
+  const dt=Math.min((now-lastTime)/1000,0.1);
+  lastTime=now;
+  gameTime+=dt;
+
+  // Difficulty ramp
+  const t=gameTime;
+  gaugeRate=3+t*0.06;
+  spawnInterval=Math.max(900,2200-t*18);
+  itemSpeed=2.0+t*0.04;
+
+  // Gauge increase
+  gauge=Math.min(100,gauge+gaugeRate*dt);
+  updateGauge();
+  timeEl.textContent=`⏱ ${Math.floor(gameTime)}s`;
+
+  // Spawn
+  if(now-lastSpawn>spawnInterval){
+    spawnItem();
+    lastSpawn=now;
+    // Extra item at high time
+    if(t>30 && Math.random()<0.4){
+      setTimeout(()=>spawnItem(),spawnInterval*0.45);
+    }
+  }
+
+  // Move items
+  const wrap=document.getElementById('game-wrap');
+  const ww=wrap.offsetWidth||390;
+  items=items.filter(item=>{
+    const speed=itemSpeed*(item.fromRight?-1:1)*60*dt;
+    item.x+=speed;
+    item.el.style.left=item.x+'px';
+    // Auto remove if off screen
+    if((item.fromRight && item.x<-80)||((!item.fromRight) && item.x>ww+10)){
+      item.el.remove();
+      return false;
+    }
+    return true;
+  });
+
+  // Danger aura
+  if(gauge>70){
+    poopAura.style.opacity=((gauge-70)/30).toString();
+    dangerText.classList.toggle('show', gauge>85);
+  } else {
+    poopAura.style.opacity='0';
+    dangerText.classList.remove('show');
+  }
+
+  // Game over check
+  if(gauge>=100){
+    gameOver();
+    return;
+  }
+
+  animFrame=requestAnimationFrame(gameLoop);
+}
+
+function spawnItem(){
+  const wrap=document.getElementById('game-wrap');
+  const ww=wrap.offsetWidth||390;
+  const fromRight=Math.random()<0.5;
+  // Weighted: more toilets early, more chairs later
+  const chairChance=0.35+Math.min(gameTime*0.008,0.3);
+  const isChair=Math.random()<chairChance;
+
+  const el=document.createElement('div');
+  el.className='item';
+  el.innerHTML=isChair ? makeChairSVG() : makeToiletSVG();
+  el.style.left=(fromRight?ww+10:-80)+'px';
+
+  lane.appendChild(el);
+  const obj={el,fromRight,x:fromRight?ww+10:-80,type:isChair?'chair':'toilet'};
+  items.push(obj);
+
+  el.addEventListener('touchstart',e=>{e.preventDefault();handleTap(obj,el);},{passive:false});
+  el.addEventListener('mousedown',e=>{handleTap(obj,el);});
+}
+
+function handleTap(obj,el){
+  if(!gameRunning) return;
+  // Remove item
+  const idx=items.indexOf(obj);
+  if(idx===-1) return;
+  items.splice(idx,1);
+  el.remove();
+
+  // Sit anim
+  charWrap.classList.remove('sit-anim');
+  void charWrap.offsetWidth;
+  charWrap.classList.add('sit-anim');
+
+  const cx=charWrap.offsetLeft+45;
+  const cy=charWrap.offsetTop+60;
+
+  if(obj.type==='toilet'){
+    score+=100;
+    gauge=Math.max(0,gauge-18);
+    toiletCount++;
+    showEffect('🚽✨',cx,cy-30,'#4ade80');
+    showRing(cx,cy,'#4ade80');
+    updateGauge();
+  } else {
+    score-=300;
+    gauge=Math.min(100,gauge+15);
+    showEffect('💥😱',cx,cy-30,'#f87171');
+    showRing(cx,cy,'#f87171');
+    flashMiss();
+    updateGauge();
+  }
+  scoreEl.textContent='🏆 '+score;
+}
+
+function showEffect(emoji,x,y,color){
+  const ef=document.createElement('div');
+  ef.className='effect';
+  ef.textContent=emoji;
+  ef.style.cssText=`left:${x-20}px;top:${y}px;color:${color};`;
+  document.getElementById('game-area').appendChild(ef);
+  setTimeout(()=>ef.remove(),900);
+}
+
+function showRing(x,y,color){
+  const ring=document.createElement('div');
+  ring.className='hit-ring';
+  ring.style.cssText=`left:${x}px;top:${y}px;border-color:${color};`;
+  document.getElementById('game-area').appendChild(ring);
+  setTimeout(()=>ring.remove(),500);
+}
+
+function flashMiss(){
+  missOverlay.style.opacity='1';
+  setTimeout(()=>missOverlay.style.opacity='0',200);
+}
+
+function updateGauge(){
+  gaugeBar.style.width=gauge+'%';
+  const hue=gauge>80?0:gauge>50?30:260;
+  gaugeBar.style.background=gauge>80
+    ?'linear-gradient(90deg,#fb923c,#ef4444)'
+    :gauge>50
+    ?'linear-gradient(90deg,#fbbf24,#fb923c)'
+    :'linear-gradient(90deg,#a78bfa,#f472b6)';
+}
+
+function gameOver(){
+  gameRunning=false;
+  cancelAnimationFrame(animFrame);
+  dangerText.classList.remove('show');
+  poopAura.style.opacity='0';
+
+  // Leak animation
+  const ef=document.createElement('div');
+  ef.style.cssText='position:absolute;top:30%;left:50%;transform:translateX(-50%);font-size:64px;z-index:28;animation:floatUp 1.5s ease forwards;';
+  ef.textContent='💦😱';
+  document.getElementById('game-area').appendChild(ef);
+  setTimeout(()=>ef.remove(),1600);
+
+  setTimeout(()=>{
+    document.getElementById('go-final-score').textContent=score+'点';
+    showScreen('gameover-screen');
+  },1200);
+}
+
+async function submitScore(){
+  const name=document.getElementById('name-input').value.trim()||'名無し';
+  const ranking=await loadRanking();
+  ranking.push({name,score,time:Math.floor(gameTime),date:new Date().toLocaleDateString('ja-JP')});
+  ranking.sort((a,b)=>b.score-a.score);
+  ranking.splice(20);
+  await saveRanking(ranking);
+  showScreen('ranking-screen');
+}
+
+async function loadRanking(){
+  try{
+    const r=await window.storage.get(STORAGE_KEY,true);
+    return r?JSON.parse(r.value):[];
+  }catch(e){ return []; }
+}
+
+async function saveRanking(data){
+  try{
+    await window.storage.set(STORAGE_KEY,JSON.stringify(data),true);
+  }catch(e){}
+}
+
+async function renderRanking(){
+  const list=document.getElementById('ranking-list');
+  list.innerHTML='<p style="color:#a78bfa;text-align:center;font-size:13px">読み込み中…</p>';
+  const ranking=await loadRanking();
+  if(!ranking.length){
+    list.innerHTML='<p style="color:#a78bfa;text-align:center">まだ記録がありません</p>';
+    return;
+  }
+  const medals=['🥇','🥈','🥉'];
+  list.innerHTML=ranking.map((r,i)=>`
+    <div class="rank-row ${i<3?'rank-'+(i+1):''}">
+      <div class="rank-num">${medals[i]||i+1}</div>
+      <div class="rank-name">${escHtml(r.name)}</div>
+      <div class="rank-score">${r.score}点</div>
+      <div style="font-size:11px;color:#7c3aed;min-width:36px;text-align:right">${r.date||''}</div>
+    </div>`).join('');
+}
+
+function escHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// Tap game area = sit on closest item
+document.getElementById('game-area').addEventListener('touchstart',e=>{
+  if(!gameRunning) return;
+  if(e.target.closest('.item')) return;
+  e.preventDefault();
+  tapClosestItem(e.touches[0].clientX);
+},{passive:false});
+document.getElementById('game-area').addEventListener('mousedown',e=>{
+  if(!gameRunning) return;
+  if(e.target.closest('.item')) return;
+  tapClosestItem(e.clientX);
+});
+
+function tapClosestItem(touchX){
+  if(!items.length) return;
+  // Find closest item to char center
+  const charX=charWrap.offsetLeft+45;
+  let closest=null,minDist=Infinity;
+  items.forEach(item=>{
+    const ix=item.x+35;
+    const d=Math.abs(ix-charX);
+    if(d<minDist){minDist=d;closest=item;}
+  });
+  if(closest && minDist<160){
+    handleTap(closest,closest.el);
+  } else {
+    // Miss tap bounce
+    charWrap.classList.remove('sit-anim');
+    void charWrap.offsetWidth;
+    charWrap.classList.add('sit-anim');
+  }
+}
+
+// SVGs
+function makeToiletSVG(){
+  return `<svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg" width="70" height="70">
+  <rect x="8" y="5" width="54" height="12" rx="6" fill="#e0e0e0" stroke="#bbb" stroke-width="1"/>
+  <rect x="12" y="17" width="46" height="6" rx="3" fill="#d5d5d5"/>
+  <ellipse cx="35" cy="44" rx="26" ry="20" fill="#f5f5f5" stroke="#ccc" stroke-width="1.5"/>
+  <ellipse cx="35" cy="44" rx="18" ry="14" fill="#c8eeff"/>
+  <ellipse cx="35" cy="56" rx="24" ry="10" fill="#e0e0e0" stroke="#ccc" stroke-width="1"/>
+  <rect x="28" y="60" width="14" height="8" rx="3" fill="#bbb"/>
+  <text x="35" y="48" text-anchor="middle" font-size="16">🚽</text>
+  </svg>`;
+}
+function makeChairSVG(){
+  return `<svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg" width="70" height="70">
+  <rect x="10" y="30" width="50" height="10" rx="4" fill="#c9a227" stroke="#a07818" stroke-width="1"/>
+  <rect x="10" y="10" width="10" height="30" rx="4" fill="#a07818"/>
+  <rect x="10" y="10" width="50" height="8" rx="4" fill="#c9a227"/>
+  <rect x="12" y="40" width="8" height="24" rx="3" fill="#a07818"/>
+  <rect x="50" y="40" width="8" height="24" rx="3" fill="#a07818"/>
+  <rect x="20" y="60" width="8" height="8" rx="2" fill="#7a5c1a"/>
+  <rect x="42" y="60" width="8" height="8" rx="2" fill="#7a5c1a"/>
+  <text x="35" y="30" text-anchor="middle" font-size="14">🪑</text>
+  </svg>`;
+}
+
+showScreen('title-screen');
+</script>
+</body>
+</html>
